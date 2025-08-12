@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bible Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0b0b0b">
+<style>
+  :root { --bg:#0b0b0b; --card:#111; --ink:#fff; --muted:#cfcfcf; --gold:#f0c674; --line:#222; --ok:#4caf50; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:3;backdrop-filter:blur(8px);background:rgba(11,11,11,.7);border-bottom:1px solid var(--line)}
+  .wrap{max-width:860px;margin:0 auto;padding:14px}
+  h1{font-size:20px;margin:0 0 6px 0;letter-spacing:.3px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:13px}
+  button{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+  button:active{transform:scale(.98)}
+  .progressbar{height:8px;width:100%;background:#1a1a1a;border-radius:999px;overflow:hidden;border:1px solid var(--line);margin-top:10px}
+  .progressbar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),#ffd98a);transition:width .3s ease}
+  main{padding:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  thead th{position:sticky;top:64px;z-index:2;background:var(--card)}
+  th,td{border-bottom:1px solid var(--line);text-align:left;padding:12px 10px;vertical-align:top}
+  th:first-child,td:first-child{width:54px}
+  th:nth-child(3),td:nth-child(3){white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  .week{color:var(--gold);font-weight:600}
+  .reading{font-weight:600}
+  .pray{color:var(--muted);font-size:14px}
+  .checkcell{text-align:center}
+  input[type="checkbox"]{width:26px;height:26px;accent-color:var(--gold);}
+  .footer{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-top:12px}
+  .hint{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.4}
+  @media (max-width:640px){.hide-sm{display:none}th:nth-child(2),td:nth-child(2){display:none}th:nth-child(4),td:nth-child(4){font-size:13px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Bible Reading Growth Tracker</h1>
+    <div class="meta">
+      <span id="progressText">0 of 28 complete</span><span>•</span><span>Tap the box to save</span>
+      <span class="hide-sm">•</span><span class="hide-sm">Add to Home Screen for one tap access</span>
+    </div>
+    <div class="progressbar"><div id="progressFill"></div></div>
+    <div class="footer">
+      <button id="resetBtn">Reset all</button>
+      <button id="shareBtn">Share</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th class="hide-sm">Week</th>
+          <th>Reading</th>
+          <th>Prayer Focus</th>
+          <th class="checkcell">Done</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="hint">
+      Tip: On Android Chrome or Opera, Add to Home screen. Works offline. Your progress is stored on your phone.
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const readings = [
+    [1,"Week 1 - John","John 1","Jesus, help me understand who You really are and open my heart to You."],
+    [2,"Week 1 - John","John 2","Jesus, help me understand who You really are and open my heart to You."],
+    [3,"Week 1 - John","John 3","Jesus, help me understand who You really are and open my heart to You."],
+    [4,"Week 1 - John","John 4","Jesus, help me understand who You really are and open my heart to You."],
+    [5,"Week 1 - John","John 5","Jesus, help me understand who You really are and open my heart to You."],
+    [6,"Week 1 - John","John 6","Jesus, help me understand who You really are and open my heart to You."],
+    [7,"Week 1 - John","John 7","Jesus, help me understand who You really are and open my heart to You."],
+    [8,"Week 2 - John","John 8","Jesus, help me understand who You really are and open my heart to You."],
+    [9,"Week 2 - John","John 9","Jesus, help me understand who You really are and open my heart to You."],
+    [10,"Week 2 - John","John 10","Jesus, help me understand who You really are and open my heart to You."],
+    [11,"Week 2 - John","John 11","Jesus, help me understand who You really are and open my heart to You."],
+    [12,"Week 2 - John","John 12","Jesus, help me understand who You really are and open my heart to You."],
+    [13,"Week 2 - John","John 13","Jesus, help me understand who You really are and open my heart to You."],
+    [14,"Week 2 - John","John 14","Jesus, help me understand who You really are and open my heart to You."],
+    [15,"Week 3 - John & Romans","John 15","God, help me understand what You have done for me and how You want me to live."],
+    [16,"Week 3 - John & Romans","John 16","God, help me understand what You have done for me and how You want me to live."],
+    [17,"Week 3 - John & Romans","John 17","God, help me understand what You have done for me and how You want me to live."],
+    [18,"Week 3 - John & Romans","John 18","God, help me understand what You have done for me and how You want me to live."],
+    [19,"Week 3 - John & Romans","John 19","God, help me understand what You have done for me and how You want me to live."],
+    [20,"Week 3 - John & Romans","John 20","God, help me understand what You have done for me and how You want me to live."],
+    [21,"Week 3 - John & Romans","John 21","God, help me understand what You have done for me and how You want me to live."],
+    [22,"Week 4 - Romans","Romans 1","Lord, give me wisdom and courage to obey Your Word today."],
+    [23,"Week 4 - Romans","Romans 2","Lord, give me wisdom and courage to obey Your Word today."],
+    [24,"Week 4 - Romans","Romans 3","Lord, give me wisdom and courage to obey Your Word today."],
+    [25,"Week 4 - Romans","Romans 4","Lord, give me wisdom and courage to obey Your Word today."],
+    [26,"Week 4 - Romans","Romans 5","Lord, give me wisdom and courage to obey Your Word today."],
+    [27,"Week 4 - Romans","Romans 6","Lord, give me wisdom and courage to obey Your Word today."],
+    [28,"Week 4 - Romans","Romans 7","Lord, give me wisdom and courage to obey Your Word today."]
+  ];
+
+  const tbody = document.getElementById('rows');
+  const PROG_KEY = 'bible_tracker_v1';
+  const saved = JSON.parse(localStorage.getItem(PROG_KEY) || '{}');
+
+  function rowCheckbox(day){ return `<input type="checkbox" data-day="${day}" ${saved[day] ? 'checked' : ''} aria-label="Mark day ${day} completed">`; }
+
+  function renderRows(){
+    tbody.innerHTML = readings.map(([day,week,reading,prayer]) => `
+      <tr>
+        <td>${day}</td>
+        <td class="hide-sm"><span class="week">${week}</span></td>
+        <td><span class="reading">${reading}</span></td>
+        <td><span class="pray">${prayer}</span></td>
+        <td class="checkcell">${rowCheckbox(day)}</td>
+      </tr>`).join('');
+  }
+
+  function updateProgress(){
+    const total = readings.length;
+    const done = Object.values(saved).filter(Boolean).length;
+    document.getElementById('progressText').textContent = `${done} of ${total} complete`;
+    document.getElementById('progressFill').style.width = `${(done/total)*100}%`;
+  }
+
+  function handleChange(e){
+    const el = e.target;
+    if(el && el.matches('input[type="checkbox"][data-day]')){
+      const day = el.getAttribute('data-day');
+      saved[day] = el.checked;
+      localStorage.setItem(PROG_KEY, JSON.stringify(saved));
+      updateProgress();
+    }
+  }
+
+  function resetAll(){
+    if(!confirm('Reset all checkmarks?')) return;
+    for(const k in saved) delete saved[k];
+    localStorage.setItem(PROG_KEY, JSON.stringify(saved));
+    document.querySelectorAll('input[type="checkbox"][data-day]').forEach(cb => cb.checked = false);
+    updateProgress();
+  }
+
+  function sharePage(){
+    const u = location.href, t = document.title;
+    if(navigator.share) navigator.share({title:t,url:u}).catch(()=>{});
+    else navigator.clipboard.writeText(u).then(()=>alert('Link copied')).catch(()=>{});
+  }
+
+  renderRows();
+  updateProgress();
+  document.addEventListener('change', handleChange);
+  document.getElementById('resetBtn').addEventListener('click', resetAll);
+  document.getElementById('shareBtn').addEventListener('click', sharePage);
+})();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    });
+  }
+</script>
+</body>
+</html>
